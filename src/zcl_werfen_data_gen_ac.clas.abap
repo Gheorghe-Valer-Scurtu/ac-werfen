@@ -19,6 +19,8 @@ class zcl_werfen_data_gen_ac implementation.
 *local_last_changed_at : abp_locinst_lastchange_tstmpl;
 *last_changed_at       : abp_lastchange_tstmpl;
 
+* new code added
+
     data: lt_acc_categ type table of zwtb_acc_categ,
           lt_catego    type table of zwtb_categ,
           lt_clientes  type table of zwtb_clientes,
