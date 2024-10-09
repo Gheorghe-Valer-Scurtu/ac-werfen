@@ -1,0 +1,41 @@
+@Metadata.layer: #CORE
+
+@UI: { headerInfo: { typeName: 'Booking Supplement',
+                     typeNamePlural: 'Booking Supplements',
+                     title: { type: #STANDARD,
+                             label: 'Booking Supplement',
+                              value: 'BookingSupplementID'}}}
+annotate entity zw_c_bksuppl_i with
+{
+  @UI.facet: [{ id: 'BookingSupplement',
+                purpose: #STANDARD,
+                label: 'Booking Supplement',
+                type: #IDENTIFICATION_REFERENCE,
+                position: 10 }]
+  @UI.hidden: true
+  BookSupplUUID;
+  @UI.hidden: true
+  TravelUUID;
+  @UI.hidden: true
+  BookingUUID;
+
+  @UI: { lineItem: [{ position: 10,
+                      importance: #HIGH }],
+         identification: [{ position: 10 }] }
+  BookingSupplementID;
+
+  @UI: { lineItem: [{ position: 20,
+                      importance: #HIGH }],
+         identification: [{ position: 20 }] }
+  SupplementID;
+
+  @UI: { lineItem: [{ position: 30,
+                        importance: #HIGH }],
+           identification: [{ position: 30 }] }
+  BookSupplPrice;
+
+  @UI.hidden: true
+  LocalLastChangedAt;
+
+
+}

@@ -3,7 +3,7 @@
 {
 "FROM":
 [
-"ZWTRAVEL_I"
+"ZW_R_TRAVEL_I"
 ],
 "ASSOCIATED":
 [
@@ -11,10 +11,13 @@
 "/DMO/I_CUSTOMER",
 "/DMO/I_OVERALL_STATUS_VH",
 "I_CURRENCY",
+"ZW_I_BOOKING_I",
 "ZW_R_BOOKING_I"
 ],
 "BASE":
-[],
+[
+"ZW_R_TRAVEL_I"
+],
 "ANNO_REF":
 [],
 "SCALAR_FUNCTION":
