@@ -47,8 +47,12 @@ define root view entity zw_c_travel_i
       OverallStatus,
       _OverallStatus._Text.Text as OverallStatusText : localized,
 
+      @Semantics.systemDateTime.lastChangedAt: true
+      LastChangedAt,
+
       @Semantics.systemDateTime.localInstanceLastChangedAt: true
       LocalLastChangedAt,
+
 
       /* Associations */
       _Agency,

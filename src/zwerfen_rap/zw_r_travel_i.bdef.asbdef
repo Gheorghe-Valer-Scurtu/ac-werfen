@@ -1,0 +1,203 @@
+managed;
+strict ( 2 );
+with draft;
+
+define behavior for zw_r_travel_i alias Travel
+implementation in class zbp_w_r_travel_i unique
+persistent table zwtravel_i
+draft table zwtravel_id
+lock master
+total etag LocalCreatedAt
+authorization master ( global, instance )
+etag master LocalLastChangedAt
+{
+  create ( precheck );
+  update ( precheck );
+  delete;
+  association _Booking { create ( features : instance, authorization : update ); with draft; }
+
+  field ( numbering : managed, readonly ) TravelUUID;
+
+  field ( readonly ) TravelID,
+  OverallStatus,
+  TotalPrice,
+  LastChangedAt,
+  LocalCreatedAt,
+  LocalCreatedBy,
+  LocalLastChangedAt,
+  LocalLastChangedBy;
+
+  field ( mandatory ) CustomerID, AgencyID, BeginDate, EndDate, CurrencyCode;
+
+  field ( features : instance ) BookingFee;
+
+  action ( features : instance, authorization : update ) acceptTravel result [1] $self;
+  action ( features : instance, authorization : update ) rejectTravel result [1] $self;
+  action ( features : instance, authorization : update ) deductDiscount
+    parameter zw_ae_travel_disc_i result [1] $self;
+  internal action reCalcTotalPrice;
+
+  determination setTravelNumber on save { create; }
+  determination setStatusToOpen on modify { create; }
+  determination calculateTotalPrice on modify { create; field BookingFee, CurrencyCode; }
+
+  validation validateCustomer on save { create; field CustomerID; }
+  validation validateAgency on save { create; field AgencyID; }
+  validation validateDates on save { create; field BeginDate, EndDate; }
+  validation validateCurrencyCode on save { create; field CurrencyCode; }
+  validation validateBookingFee on save { create; field BookingFee; }
+
+
+  determine action validateCustomerID { validation validateCustomer; }
+  determine action validateAgencyID { validation validateAgency; }
+  determine action validateDateRange { validation validateDates; }
+  determine action validateBookingCharge { validation validateBookingFee; }
+
+  side effects
+  {
+    field BookingFee affects field TotalPrice;
+    determine action validateAgencyID executed on field AgencyID affects messages;
+    determine action validateCustomerID executed on field CustomerID affects messages;
+    determine action validateDateRange executed on field BeginDate, field EndDate affects messages;
+    determine action validateBookingCharge executed on field BookingFee affects messages;
+  }
+
+  draft action Resume with additional implementation;
+  draft action Edit;
+  draft action Activate optimized;
+  draft action Discard;
+
+  draft determine action Prepare
+  {
+    validation validateCustomer;
+    validation validateAgency;
+    validation validateDates;
+    validation validateCurrencyCode;
+    validation validateBookingFee;
+    validation Booking~validateCustomer;
+    validation Booking~validateConnection;
+    validation Booking~validateCurrencyCode;
+    validation Booking~validateFlightPrice;
+    validation Booking~validateStatus;
+    validation BookingSupplement~validateSupplement;
+    validation BookingSupplement~validateCurrencyCode;
+    validation BookingSupplement~validatePrice;
+  }
+
+  mapping for zwtravel_i
+    {
+      AgencyID           = agency_id;
+      BeginDate          = begin_date;
+      BookingFee         = booking_fee;
+      CurrencyCode       = currency_code;
+      CustomerID         = customer_id;
+      Description        = description;
+      EndDate            = end_date;
+      LastChangedAt      = last_changed_at;
+      LocalCreatedAt     = local_created_at;
+      LocalCreatedBy     = local_created_by;
+      LocalLastChangedAt = local_last_changed_at;
+      LocalLastChangedBy = local_last_changed_by;
+      OverallStatus      = overall_status;
+      TotalPrice         = total_price;
+      TravelID           = travel_id;
+      TravelUUID         = travel_uuid;
+    }
+}
+
+define behavior for zw_r_booking_i alias Booking
+implementation in class zbp_w_r_booking_i unique
+persistent table zwbooking_i
+draft table zwbooking_id
+lock dependent by _Travel
+authorization dependent by _Travel
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+  association _BookingSupplement { create ( authorization : update ); with draft; }
+
+  association _Travel { with draft; }
+
+  field ( numbering : managed, readonly ) BookingUUID;
+  field ( readonly ) TravelUUID, BookingID, BookingDate, LocalLastChangedAt;
+  field ( mandatory ) CustomerID, AirlineID, ConnectionID, FlightDate, CurrencyCode;
+
+  determination setBookingNumber on save { create; }
+  determination setBookingDate on save { create; }
+  determination calculateTotalPrice on modify { create; field FlightPrice, CurrencyCode; }
+
+  validation validateCustomer on save { create; field CustomerID; }
+  validation validateConnection on save { create; field AirlineID, ConnectionID, FlightDate; }
+  validation validateCurrencyCode on save { create; field CurrencyCode; }
+  validation validateFlightPrice on save { create; field FlightPrice; }
+  validation validateStatus on save { create; field BookingStatus; }
+
+  determine action validateFlightCosts { validation validateFlightPrice; }
+
+  side effects
+  {
+    field FlightPrice affects field _Travel.TotalPrice;
+    determine action validateFlightCosts executed on field FlightPrice affects messages; }
+
+  mapping for zwbooking_i
+    {
+      AirlineID          = carrier_id;
+      BookingDate        = booking_date;
+      BookingID          = booking_id;
+      BookingStatus      = booking_status;
+      BookingUUID        = booking_uuid;
+      ConnectionID       = connection_id;
+      CurrencyCode       = currency_code;
+      CustomerID         = customer_id;
+      FlightDate         = flight_date;
+      FlightPrice        = flight_price;
+      LocalLastChangedAt = local_last_changed_at;
+      TravelUUID         = parent_uuid;
+    }
+}
+
+define behavior for zw_r_bksuppl_i alias BookingSupplement
+implementation in class zbp_w_r_bksuppl_i unique
+persistent table zwbksuppl_i
+draft table zwbksuppl_id
+lock dependent by _Travel
+authorization dependent by _Travel
+etag master LocalLastChangedAt
+{
+  update;
+  delete;
+  association _Travel { with draft; }
+  association _Booking { with draft; }
+
+  field ( numbering : managed, readonly ) BookSupplUUID;
+  field ( readonly ) TravelUUID, BookingUUID, BookingSupplementID, LocalLastChangedAt;
+  field ( mandatory ) SupplementID, CurrencyCode;
+
+  determination setBookSupplNumber on save { create; }
+  determination calculateTotalPrice on modify { create; field BookSupplPrice, CurrencyCode; }
+
+  validation validateSupplement on save { create; field SupplementID; }
+  validation validateCurrencyCode on save { create; field CurrencyCode; }
+  validation validatePrice on save { create; field BookSupplPrice; }
+
+  determine action validateSupplementPrice { validation validatePrice; }
+
+  side effects
+  {
+    field BookSupplPrice affects field _Travel.TotalPrice;
+    determine action validateSupplementPrice executed on field BookSupplPrice affects messages;
+  }
+
+  mapping for zwbksuppl_i
+    {
+      BookSupplPrice      = price;
+      BookSupplUUID       = booksuppl_uuid;
+      BookingSupplementID = booking_supplement_id;
+      BookingUUID         = parent_uuid;
+      CurrencyCode        = currency_code;
+      LocalLastChangedAt  = local_last_changed_at;
+      SupplementID        = supplement_id;
+      TravelUUID          = root_uuid;
+    }
+}
