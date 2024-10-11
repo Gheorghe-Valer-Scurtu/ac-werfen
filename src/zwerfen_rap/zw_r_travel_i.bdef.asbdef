@@ -35,6 +35,7 @@ etag master LocalLastChangedAt
   action ( features : instance, authorization : update ) rejectTravel result [1] $self;
   action ( features : instance, authorization : update ) deductDiscount
     parameter zw_ae_travel_disc_i result [1] $self;
+
   internal action reCalcTotalPrice;
 
   determination setTravelNumber on save { create; }
